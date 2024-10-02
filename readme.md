@@ -1,0 +1,1 @@
+This is an internal tool for testing ingesting ServiceNow incident records to a RAG AI chatbot system.

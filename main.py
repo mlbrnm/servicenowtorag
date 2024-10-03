@@ -26,6 +26,8 @@ class Record:
         self.resolved_by = row_dict['resolved_by']
         self.close_notes = row_dict['close_notes'].strip()
         self.close_notes_compact = re.sub(r'\n+', '\n', self.close_notes)
+        self.work_notes_compact_cleaned = re.sub(r"Escalate in \d+ minutes to [^\n]+\n", "", self.work_notes_compact, flags=re.DOTALL)
+        self.work_notes_compact_cleaned_further = self.work_notes_compact_cleaned.replace(" (Work notes)", "").replace("This incident escalation is in progress using the following escalation plan:", "Escalation in progress.")
 
     @staticmethod
     def parse_date(date_str):
@@ -55,7 +57,7 @@ class Record:
 Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
 ---- Problem:\n{self.description_compact}
 ---- Solution:\n{self.close_notes_compact}
----- Work Notes:\n{self.work_notes_compact}
+---- Work Notes:\n{self.work_notes_compact_cleaned_further}
 \n\n\n--------------------------------------------------------------\n\n\n\n"""
         else:
             return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}

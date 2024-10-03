@@ -1,4 +1,6 @@
 import csv
+import re
+import os
 from datetime import datetime
 
 class Record:
@@ -11,15 +13,19 @@ class Record:
         """
         self.number = row_dict['number']
         self.opened_at = self.parse_date(row_dict['opened_at'])
-        self.short_description = row_dict['short_description']
+        self.description = row_dict['description'].strip()
+        self.description_compact = re.sub(r'\n+', '\n', self.description)
+        self.short_description = row_dict['short_description'].strip()
         self.caller_id = row_dict['caller_id']
         self.category = row_dict['category']
         self.assignment_group = row_dict['assignment_group']
         self.assigned_to = row_dict['assigned_to']
-        self.work_notes = row_dict['work_notes']
+        self.work_notes = row_dict['work_notes'].strip()
+        self.work_notes_compact = re.sub(r'\n+', '\n', self.work_notes)
         self.resolved_at = self.parse_date(row_dict['resolved_at'])
         self.resolved_by = row_dict['resolved_by']
-        self.close_notes = row_dict['close_notes']
+        self.close_notes = row_dict['close_notes'].strip()
+        self.close_notes_compact = re.sub(r'\n+', '\n', self.close_notes)
 
     @staticmethod
     def parse_date(date_str):
@@ -41,6 +47,22 @@ class Record:
     def __str__(self):
         """ Provides a string representation of the Record object. """
         return f"{self.number} - {self.short_description}"
+
+    def print_record(self, print_work_notes = True):
+        """ Turns the record into a formatted block of text for saving to a file. """
+        if print_work_notes and self.work_notes:
+            return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}
+Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
+---- Problem:\n{self.description_compact}
+---- Solution:\n{self.close_notes_compact}
+---- Work Notes:\n{self.work_notes_compact}
+\n\n\n--------------------------------------------------------------\n\n\n\n"""
+        else:
+            return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}
+Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
+---- Problem:\n{self.description_compact}
+---- Solution:\n{self.close_notes_compact}
+\n\n\n--------------------------------------------------------------\n\n\n\n"""
 
 def load_csv_to_dict(filename='incidents.csv'):
     """
@@ -73,6 +95,25 @@ def load_csv_to_dict(filename='incidents.csv'):
     print("Failed to read the file with any of the tried encodings.")
     return []
 
+def save_to_text(records):
+    mostrecentdate = get_most_recent_record(records).resolved_at.strftime('%Y-%m-%d_%H-%M-%S') or 'unknown'
+    filename = mostrecentdate + '.txt'
+    try:
+        with open(filename, 'w', encoding='iso-8859-1') as file:
+            for record in records:
+                file.write(record.print_record(True))
+        print(f"\nSuccessfully saved to {filename}\n")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def get_most_recent_record(records):
+    most_recent_record = max(
+        (record for record in records if record.resolved_at), 
+        key=lambda record: record.resolved_at,
+        default=None
+    )
+    return most_recent_record
+
 if __name__ == "__main__":
     print("\n---------------------------------------------\nWelcome to the ServiceNow -> RAG Ready Script")
     filename = input("Enter the filename (default: incident.csv): ")
@@ -80,13 +121,14 @@ if __name__ == "__main__":
     records = load_csv_to_dict(filename)
 
     if records:
-        for i in range(len(records)):
-            print("\n-------------------------------")
-            print(f"{records[i].number} | {records[i].opened_at.strftime('%B %d, %Y')}")
-            print(f"Submitted by: {records[i].caller_id} | Resolved by: {records[i].resolved_by}")
-            print(f"Problem:\n{records[i].short_description}")
-            print(f"Solution:\n{records[i].close_notes}")
-            print(f"Work Notes:\n{records[i].work_notes}")
-            print("-------------------------------\n")
+        count = 0
+        for record in records:
+            print(f"{record.number} {record.resolved_at.strftime('%Y-%m-%d')} - {count+1}")
+            count += 1
+        print(f"Total: {count} records")
+        save_to_text(records)
+        
     else:
         print("No records found or file could not be read.")
+    
+    

@@ -16,6 +16,8 @@ class Record:
         self.description = row_dict['description'].strip()
         self.description_compact = re.sub(r'\n+', '\n', self.description)
         self.short_description = row_dict['short_description'].strip()
+        self.short_description_compact = re.sub(r'\n+', '\n', self.short_description)
+        self.combined_desc = f"{self.short_description_compact}\n{self.description_compact}"
         self.caller_id = row_dict['caller_id']
         self.category = row_dict['category']
         self.assignment_group = row_dict['assignment_group']
@@ -55,14 +57,14 @@ class Record:
         if print_work_notes and self.work_notes:
             return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}
 Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
----- Problem:\n{self.description_compact}
+---- Problem:\n{self.combined_desc}
 ---- Solution:\n{self.close_notes_compact}
 ---- Work Notes:\n{self.work_notes_compact_cleaned_further}
 \n\n\n--------------------------------------------------------------\n\n\n\n"""
         else:
             return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}
 Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
----- Problem:\n{self.description_compact}
+---- Problem:\n{self.combined_desc}
 ---- Solution:\n{self.close_notes_compact}
 \n\n\n--------------------------------------------------------------\n\n\n\n"""
 

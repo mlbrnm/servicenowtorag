@@ -30,6 +30,7 @@ class Record:
         self.close_notes_compact = re.sub(r'\n+', '\n', self.close_notes)
         self.work_notes_compact_cleaned = re.sub(r"Escalate in \d+ minutes to [^\n]+\n", "", self.work_notes_compact, flags=re.DOTALL)
         self.work_notes_compact_cleaned_further = self.work_notes_compact_cleaned.replace(" (Work notes)", "").replace("This incident escalation is in progress using the following escalation plan:", "Escalation in progress.")
+        self.configuration_item = row_dict['cmdb_ci']
 
     @staticmethod
     def parse_date(date_str):
@@ -57,7 +58,7 @@ class Record:
         if print_work_notes and self.work_notes:
             return f"""{self.number} | {self.opened_at.strftime('%B %d, %Y')}
 Submitted by: {self.caller_id} | Resolved by: {self.resolved_by}
----- Problem:\n{self.combined_desc}
+---- Problem:\n{self.configuration_item}\n{self.combined_desc}
 ---- Solution:\n{self.close_notes_compact}
 ---- Work Notes:\n{self.work_notes_compact_cleaned_further}
 \n\n\n--------------------------------------------------------------\n\n\n\n"""
